@@ -306,6 +306,261 @@ Core idea:
 //   → irreversible decision collapse
 //   → ledger-bound history
 //
+// 
+// =====================================================
+// MARK: - WHY THE LAYERED DESIGN EXISTS
+// =====================================================
+//
+// Everyday systems mix:
+//   - interpretation (what does data mean?)
+//   - policy (what should we do?)
+//   - execution (what happens next?)
+//
+// DVSM separates these completely.
+//
+// WHY:
+//
+//   If meaning and action mix → instability
+//   If policy and execution mix → nondeterminism
+//   If interpretation is unstructured → drift
+//
+// DVSM solves this by enforcing:
+//   → strict stratification
+//   → irreversible decision collapse
+//   → ledger-bound history
+// // =====================================================
+// MARK: - EXPANDED 12-LAYER DVSM MODEL
+// =====================================================
+//
+// DVSM evolves from a 10-layer conceptual system into:
+//
+//      12 STRATIFIED COMPUTATIONAL LAYERS
+//
+// Each layer is a constraint boundary,
+// not a processing step.
+//
+// -----------------------------------------------------
+// LAYER 1 — RAW INPUT LAYER
+// -----------------------------------------------------
+// Real-world signals enter system (latency, drift, load).
+//
+// Meaning: “what exists externally”
+//
+// -----------------------------------------------------
+// LAYER 2 — NORMALIZATION LAYER
+// -----------------------------------------------------
+// Converts heterogeneous signals into canonical form.
+//
+// Meaning: “what is comparable”
+//
+// -----------------------------------------------------
+// LAYER 3 — CLASSIFICATION LAYER (C)
+// -----------------------------------------------------
+// Assigns signals into I / U / E strata.
+//
+// Meaning: “what type of constraint is this?”
+//
+// -----------------------------------------------------
+// LAYER 4 — CONTEXT LAYER (LEDGER WINDOW)
+// -----------------------------------------------------
+// Injects historical drift + instability context.
+//
+// Meaning: “what has this system been doing?”
+//
+// -----------------------------------------------------
+// LAYER 5 — HYSTERESIS LAYER
+// -----------------------------------------------------
+// Prevents classification jitter via ledger inertia.
+//
+// Meaning: “what should remain stable?”
+//
+// -----------------------------------------------------
+// LAYER 6 — ARBITRATION LAYER (A)
+// -----------------------------------------------------
+// Applies lexicographic dominance rules.
+//
+// Meaning: “what is allowed to override what?”
+//
+// -----------------------------------------------------
+// LAYER 7 — GOVERNANCE LAYER (G)
+// -----------------------------------------------------
+// Defines system regime (safe, degraded, sealed).
+//
+// Meaning: “what mode is the system in?”
+//
+// -----------------------------------------------------
+// LAYER 8 — RUNTIME GEOMETRY LAYER (R)
+// -----------------------------------------------------
+// Models instability, drift, covariance, entropy.
+//
+// Meaning: “how unstable is the system?”
+//
+// -----------------------------------------------------
+// LAYER 9 — ENERGY LAYER (E)
+// -----------------------------------------------------
+// Controls compute budgets and execution throttling.
+//
+// Meaning: “what resources are available?”
+//
+// -----------------------------------------------------
+// LAYER 10 — EXECUTION LAYER
+// -----------------------------------------------------
+// Performs deterministic action selection.
+//
+// Meaning: “what actually happens?”
+//
+// =====================================================
+
+
+// =====================================================
+// MARK: - NEW LAYER 11 — SEMANTIC COLLAPSE LAYER (Λ)
+// =====================================================
+//
+// PURPOSE:
+// Converts multiple epoch summaries into a bounded
+// invariant representation of system behavior.
+//
+// WHY IT EXISTS:
+//
+// Without this layer:
+//   → history grows unbounded
+//   → reasoning cost increases indefinitely
+//   → system loses scalability
+//
+// WITH THIS LAYER:
+//
+//   history becomes meaning,
+//   not raw replay.
+//
+// -----------------------------------------------------
+// HUMAN ANALOGY:
+// -----------------------------------------------------
+// “Instead of remembering every moment of your life,
+//  you remember patterns of who you became.”
+//
+// -----------------------------------------------------
+// FUNCTIONAL ROLE:
+// -----------------------------------------------------
+//   input:  epoch summaries
+//   output: invariant semantic signature
+// =====================================================
+
+
+// =====================================================
+// MARK: - NEW LAYER 12 — META-BOOTSTRAP LAYER
+// =====================================================
+//
+// PURPOSE:
+// Enables system restart using ONLY invariants,
+// not full historical reconstruction.
+//
+// WHY THIS MATTERS:
+//
+// Traditional systems require:
+//   → full logs
+//   → full replay
+//
+// DVSM requires only:
+//   → semantic invariants
+//   → compressed truth state
+//
+// -----------------------------------------------------
+// HUMAN ANALOGY:
+// -----------------------------------------------------
+// “You don’t need your entire past to continue existing—
+//  only the structure of what your past made you become.”
+//
+// -----------------------------------------------------
+// FUNCTIONAL ROLE:
+// -----------------------------------------------------
+//   input:  Λ (semantic collapse output)
+//   output: fully bootable DVSM kernel state
+// =====================================================
+
+
+// =====================================================
+// MARK: - HOW THE FULL SYSTEM FLOWS
+// =====================================================
+//
+// RAW DATA
+//    ↓
+// CLASSIFICATION (C)
+//    ↓
+// CONTEXT + HISTORY (Ξ window)
+//    ↓
+// HYSTERESIS STABILIZATION
+//    ↓
+// ARBITRATION (A)
+//    ↓
+// GOVERNANCE FILTER (G)
+//    ↓
+// RUNTIME GEOMETRY (R)
+//    ↓
+// ENERGY CONSTRAINT (E)
+//    ↓
+// EXECUTION (L)
+//    ↓
+// LEDGER COMMIT
+//    ↓
+// SEMANTIC COLLAPSE (Λ)
+//    ↓
+// META-BOOTSTRAP (12)
+//
+// =====================================================
+
+
+// =====================================================
+// MARK: - PRACTICAL USE GUIDE (FOR DEVELOPERS)
+// =====================================================
+//
+// 1. DO NOT bypass classification layer (C)
+//    → raw signals must never reach arbitration
+//
+// 2. DO NOT introduce runtime weights
+//    → DVSM is not probabilistic
+//
+// 3. ALWAYS assume ledger is authoritative
+//    → system state = ledger-derived state
+//
+// 4. USE config only for envelope constraints
+//    → NOT decision logic
+//
+// 5. NEVER mix:
+//       - energy optimization
+//       - governance decisions
+//       - execution control
+//
+//    They are strictly separated layers.
+//
+// =====================================================
+
+
+// =====================================================
+// MARK: - EVERYDAY INTERPRETATION SUMMARY
+// =====================================================
+//
+// DVSM is not “a system that computes decisions”
+//
+// It is:
+//
+//   A structured way to ensure that every decision
+//   is forced through layers of meaning, constraint,
+//   and historical consistency before it is allowed
+//   to become real.
+//
+// In simple terms:
+//
+//   → Nothing is guessed
+//   → Nothing is blended
+//   → Nothing is probabilistic
+//
+// Only:
+//
+/*
+    if it is allowed by structure → it happens
+    otherwise → it cannot exist
+*/
+//
 =====================================================
 END OF EXPANDED HUMAN ARCHITECTURE GUIDE LAYER
 =====================================================
