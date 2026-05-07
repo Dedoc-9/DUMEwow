@@ -1,22 +1,162 @@
+// Author: Daniel J. Dillberg
+//
 // =====================================================
-// AUTHOR:
-//   Daniel J. Dillberg
+// MARK: - AUTHORSHIP SPECIFICATION EXTENSION
+// DVSM v16.x — IDENTITY + PROVENANCE ENRICHMENT LAYER
+// =====================================================
 //
-// ROLE:
-//   DVSM System Architect / Originator
+// PURPOSE:
+// Formalizes author identity rules, validation semantics,
+// and provenance consistency guarantees for DVSM systems.
 //
-// NOTE:
-//   This file defines provenance, configuration,
-//   runtime binding contracts, AND system boilerplate.
+// This layer ensures:
+//   ✔ deterministic author identity structure
+//   ✔ safe provenance propagation across systems
+//   ✔ separation of human identity vs system role
+//   ✔ optional extensibility for multi-author lineage
 //
-//   It remains architecture-agnostic and does NOT
-//   assume any monolithic engine implementation.
 // =====================================================
 
+// =====================================================
+// MARK: - AUTHOR IDENTITY VALIDATION
+// =====================================================
 
+public struct DVSMAuthorValidator {
+
+    /// Ensures author identity is structurally valid
+    public static func validate(_ author: DVSMAuthor) -> Bool {
+
+        guard !author.fullName.trimmingCharacters(in: .whitespaces).isEmpty else {
+            return false
+        }
+
+        guard !author.identifier.trimmingCharacters(in: .whitespaces).isEmpty else {
+            return false
+        }
+
+        guard !author.role.trimmingCharacters(in: .whitespaces).isEmpty else {
+            return false
+        }
+
+        return true
+    }
+}
+
+// =====================================================
+// MARK: - AUTHORSHIP SEMANTIC EXTENSIONS
+// =====================================================
+
+public extension DVSMAuthor {
+
+    /// Deterministic fingerprint of author identity
+    func identityFingerprint() -> Data {
+        let raw = "\(fullName)|\(identifier)|\(role)"
+        return Data(SHA256.hash(data: Data(raw.utf8)))
+    }
+
+    /// Human-readable label for logs and audits
+    var displayLabel: String {
+        "\(fullName) [\(role)]"
+    }
+
+    /// Machine-safe canonical key
+    var canonicalKey: String {
+        identifier.lowercased()
+    }
+}
+
+// =====================================================
+// MARK: - PROVENANCE CHAIN MANAGEMENT
+// =====================================================
+
+public extension DVSMProvenance {
+
+    /// Safely append a new author to lineage
+    static func appendAuthor(_ author: DVSMAuthor) {
+
+        guard DVSMAuthorValidator.validate(author) else {
+            return
+        }
+
+        // Prevent duplicate insertion by identifier
+        if lineage.contains(where: { $0.identifier == author.identifier }) {
+            return
+        }
+
+        lineage.append(author)
+    }
+
+    /// Deterministic lineage fingerprint (strong form)
+    static func lineageFingerprint() -> Data {
+
+        let combined = lineage
+            .map { $0.identityFingerprint().base64EncodedString() }
+            .joined(separator: "::")
+
+        return Data(SHA256.hash(data: Data(combined.utf8)))
+    }
+
+    /// Returns safe audit snapshot (no mutation exposure)
+    static func snapshot() -> [DVSMAuthor] {
+        return lineage
+    }
+}
+
+// =====================================================
+// MARK: - AUTHORSHIP AUDIT ENHANCEMENT
+// =====================================================
+
+public struct DVSMEnhancedAuthorshipAudit {
+
+    /// Validates full lineage integrity
+    public static func verifyLineageIntegrity() -> Bool {
+
+        let snapshot = DVSMProvenance.snapshot()
+
+        guard !snapshot.isEmpty else { return false }
+
+        return snapshot.allSatisfy {
+            DVSMAuthorValidator.validate($0)
+        }
+    }
+
+    /// Ensures deterministic ordering stability
+    public static func verifyDeterministicOrder() -> Bool {
+
+        let snapshot = DVSMProvenance.snapshot()
+
+        let sorted = snapshot.sorted { $0.identifier < $1.identifier }
+
+        return snapshot.map { $0.identifier } == sorted.map { $0.identifier }
+    }
+}
+
+// =====================================================
+// MARK: - AUTHORSHIP SUMMARY CONTRACT
+// =====================================================
+//
+// This extension formally introduces:
+//
+//   ✔ validated author identity model
+//   ✔ fingerprint-based provenance tracking
+//   ✔ safe lineage mutation rules
+//   ✔ deterministic audit snapshots
+//   ✔ separation of human vs system identity
+//
+// It enables DVSM to support:
+//
+//   - multi-author systems
+//   - distributed provenance chains
+//   - verifiable system origin tracking
+//
+// WITHOUT altering core execution semantics.
+//
+// =====================================================
+//
 // =====================================================
 // DVSM v16.x — AUTHORSHIP + SYSTEM BOOTSTRAP LAYER
 // PROVENANCE + CONFIG + BOILERPLATE + RUNTIME CONTRACTS
+// WHITEPAPER
 // =====================================================
 
 import Foundation
@@ -32,11 +172,7 @@ public struct DVSMAuthor: Sendable, Codable {
     public let identifier: String
     public let role: String
 
-    public init(
-        fullName: String,
-        identifier: String,
-        role: String
-    ) {
+    public init(fullName: String, identifier: String, role: String) {
         self.fullName = fullName
         self.identifier = identifier
         self.role = role
@@ -55,17 +191,26 @@ public enum DVSMProvenance {
         role: "DVSM v16.x System Architect"
     )
 
-    public static var lineage: [DVSMAuthor] = [
-        originator
-    ]
+    public static var lineage: [DVSMAuthor] = [originator]
 
     public static func provenanceHash() -> Data {
         let combined = lineage
             .map { "\($0.fullName)|\($0.identifier)|\($0.role)" }
             .joined(separator: "::")
 
-        return Data(SHA256.hash(data: combined.data(using: .utf8)!))
+        return Data(SHA256.hash(data: Data(combined.utf8)))
     }
+}
+
+// =====================================================
+// MARK: - SUSTAINABILITY MODE
+// =====================================================
+
+public enum DVSMSustainabilityMode: String, Sendable {
+    case fullFidelity
+    case adaptiveBalanced
+    case efficiencyOptimized
+    case ultraLowPower
 }
 
 // =====================================================
@@ -85,9 +230,70 @@ public struct DVSMConfig: Sendable {
     public var noiseFloor: Double = 0.0001
     public var enableDAI: Bool = true
     public var enableBIH: Bool = true
-
     public var enableGCPF: Bool = true
     public var autoRebaseline: Bool = false
+
+    // Core sustainability control
+    public var sustainabilityMode: DVSMSustainabilityMode = .adaptiveBalanced
+
+    public init() {}
+}
+
+// =====================================================
+// MARK: - RESOURCE BUDGET MODEL
+// =====================================================
+
+public struct DVSMResourceBudget: Sendable {
+
+    public let computeBudget: Double
+    public let energySensitivity: Double
+    public let maxGovernanceDepth: Int
+    public let enableFullCryptoAudit: Bool
+}
+
+// =====================================================
+// MARK: - DERIVED SUSTAINABILITY LOGIC
+// =====================================================
+
+public extension DVSMConfig {
+
+    func derivedResourceBudget() -> DVSMResourceBudget {
+
+        switch sustainabilityMode {
+
+        case .fullFidelity:
+            return DVSMResourceBudget(
+                computeBudget: 1.0,
+                energySensitivity: 0.1,
+                maxGovernanceDepth: Int.max,
+                enableFullCryptoAudit: true
+            )
+
+        case .adaptiveBalanced:
+            return DVSMResourceBudget(
+                computeBudget: 0.6,
+                energySensitivity: 0.4,
+                maxGovernanceDepth: 6,
+                enableFullCryptoAudit: true
+            )
+
+        case .efficiencyOptimized:
+            return DVSMResourceBudget(
+                computeBudget: 0.3,
+                energySensitivity: 0.7,
+                maxGovernanceDepth: 3,
+                enableFullCryptoAudit: false
+            )
+
+        case .ultraLowPower:
+            return DVSMResourceBudget(
+                computeBudget: 0.1,
+                energySensitivity: 1.0,
+                maxGovernanceDepth: 1,
+                enableFullCryptoAudit: false
+            )
+        }
+    }
 }
 
 // =====================================================
@@ -99,7 +305,6 @@ public struct DVSMEnvironment: Sendable {
     public let shardID: String
     public let nodeID: String
     public let region: String
-
     public let hardwareSignature: Data
     public let bootTimestamp: UInt64
 
@@ -144,36 +349,24 @@ public extension DVSMRuntimeBindable {
 }
 
 // =====================================================
-// MARK: - AUDIT LAYER
-// =====================================================
-
-public struct DVSMAuthorshipAudit {
-
-    public static func verifyOriginIntegrity(
-        runtime: DVSMRuntimeBindable
-    ) -> Bool {
-        !DVSMProvenance.lineage.isEmpty
-    }
-}
-
-// =====================================================
 // MARK: - RUNTIME CONTRACT
 // =====================================================
 
 public protocol DVSMRunnable {
     associatedtype Input
     associatedtype Output
-
     func run(_ input: Input) throws -> Output
 }
 
 // =====================================================
-// MARK: - EXECUTION CONTEXT (ADAPTER)
+// MARK: - EXECUTION CONTEXT
 // =====================================================
 
 public struct DVSMExecutionContext<Input, Output>: DVSMRunnable {
 
+    /// Opaque runtime reference (intentional abstraction boundary)
     private let system: Any
+
     private let transform: (Input) -> Data
     private let decode: (Data) -> Output
 
@@ -189,27 +382,12 @@ public struct DVSMExecutionContext<Input, Output>: DVSMRunnable {
 
     public func run(_ input: Input) throws -> Output {
         let encoded = transform(input)
-
-        // DVSM pipeline boundary:
-        // encoded → system → governance → execution → ledger
-
         return decode(encoded)
     }
 }
 
 // =====================================================
-// MARK: - BOILERPLATE LAYER (SYSTEM ENTRYPOINT)
-// =====================================================
-//
-// This layer defines *how DVSM systems are instantiated,
-// composed, and wired together safely.
-//
-// It contains NO execution logic.
-// It only defines structure and initialization contracts.
-// =====================================================
-
-// =====================================================
-// MARK: - SYSTEM INITIALIZER CONTRACT
+// MARK: - BOILERPLATE LAYER
 // =====================================================
 
 public protocol DVSMSystemBootstrappable {
@@ -222,62 +400,23 @@ public protocol DVSMSystemBootstrappable {
 }
 
 // =====================================================
-// MARK: - SYSTEM FACTORY (ENTRY POINT PATTERN)
+// MARK: - SYSTEM FACTORY
 // =====================================================
 
 public enum DVSMSystemFactory {
 
-    /// Standard deterministic bootstrap sequence
     public static func bootstrap<R: DVSMRuntimeBindable>(
         runtime: R,
         config: DVSMConfig,
         environment: DVSMEnvironment
     ) {
-
         runtime.bootstrap(config: config, environment: environment)
         runtime.bindAuthorProvenance()
     }
 }
 
 // =====================================================
-// MARK: - SYSTEM SUMMARY
-// =====================================================
-//
-// ✔ provenance + authorship integrity
-// ✔ runtime-agnostic binding interface
-// ✔ deterministic configuration layer
-// ✔ standardized bootstrap entrypoint (BOILERPLATE)
-// ✔ modular DVSM v16.2-R compatibility
-//
-// ARCHITECTURAL GUARANTEES:
-//
-// - No engine coupling
-// - No execution semantics embedded here
-// - Clean initialization boundary
-// - Fully composable system entry contract
-//
-// // =====================================================
-// DVSM v16.x — SYSTEM LIFECYCLE + BOOTSTRAP GUARANTEE LAYER
-// EXTENDS: AUTHORSHIP + BOOTSTRAP + BOILERPLATE CORE
-// =====================================================
-//
-// PURPOSE:
-// Deterministic lifecycle state tracking, bootstrap
-// attestation, and safe activation boundaries.
-//
-// DESIGN CONSTRAINTS:
-//   ✔ no engine coupling
-//   ✔ no hidden runtime state
-//   ✔ fully deterministic hashing
-//   ✔ metadata-compatible lifecycle transitions
-//
-// =====================================================
-
-import Foundation
-import CryptoKit
-
-// =====================================================
-// MARK: - SYSTEM LIFECYCLE STATE
+// MARK: - SYSTEM STATE (SINGLE SOURCE OF TRUTH)
 // =====================================================
 
 public enum DVSMSystemState: String, Sendable {
@@ -290,278 +429,11 @@ public enum DVSMSystemState: String, Sendable {
 }
 
 // =====================================================
-// MARK: - BOOTSTRAP ATTESTATION PAYLOAD
-// =====================================================
-
-public struct DVSMBootstrapAttestation: Sendable {
-
-    public let configHash: Data
-    public let environmentHash: Data
-    public let provenanceHash: Data
-    public let timestamp: UInt64
-
-    public init(
-        configHash: Data,
-        environmentHash: Data,
-        provenanceHash: Data,
-        timestamp: UInt64
-    ) {
-        self.configHash = configHash
-        self.environmentHash = environmentHash
-        self.provenanceHash = provenanceHash
-        self.timestamp = timestamp
-    }
-
-    /// Deterministic system fingerprint
-    public func globalFingerprint() -> Data {
-        let combined = configHash + environmentHash + provenanceHash
-        return Data(SHA256.hash(data: combined))
-    }
-}
-
-// =====================================================
-// MARK: - LIFECYCLE CONTROLLER CONTRACT
-// =====================================================
-
-public protocol DVSMSystemLifecycleManaging {
-
-    var systemState: DVSMSystemState { get }
-
-    func beginBootstrap()
-    func completeBootstrap() -> DVSMBootstrapAttestation
-    func sealSystem()
-    func markDegraded(reason: String)
-}
-
-// =====================================================
-// MARK: - DEFAULT HASHING UTILITIES
+// MARK: - LIFECYCLE + ENERGY INTEGRATION
 // =====================================================
 
 public extension DVSMSystemLifecycleManaging {
 
-    func computeConfigHash(_ config: DVSMConfig) -> Data {
-        let raw = """
-        \(config.mddSensitivity)|
-        \(config.posteriorOverlapThreshold)|
-        \(config.noiseFloor)
-        """
-
-        return Data(SHA256.hash(data: Data(raw.utf8)))
-    }
-
-    func computeEnvironmentHash(_ env: DVSMEnvironment) -> Data {
-        let raw = """
-        \(env.shardID)|
-        \(env.nodeID)|
-        \(env.region)|
-        \(env.bootTimestamp)
-        """
-
-        return Data(SHA256.hash(data: Data(raw.utf8)))
-    }
-
-    func computeProvenanceHash() -> Data {
-        DVSMProvenance.provenanceHash()
-    }
-}
-
-// =====================================================
-// MARK: - BOOTSTRAP VALIDATION LAYER
-// =====================================================
-
-public struct DVSMBootstrapValidator {
-
-    /// Validates structural integrity of attestation
-    public static func validate(
-        attestation: DVSMBootstrapAttestation
-    ) -> Bool {
-
-        let expected = attestation.globalFingerprint()
-        return !expected.isEmpty
-    }
-}
-
-// =====================================================
-// MARK: - READINESS CONTRACT
-// =====================================================
-
-public protocol DVSMReadinessChecking {
-
-    func isReadyForExecution() -> Bool
-    func isBootstrapConsistent() -> Bool
-}
-
-// =====================================================
-// MARK: - DEFAULT READINESS LOGIC
-// =====================================================
-
-public extension DVSMReadinessChecking {
-
-    func defaultReadinessCheck(state: DVSMSystemState) -> Bool {
-        switch state {
-        case .ready, .sealed:
-            return true
-        default:
-            return false
-        }
-    }
-}
-
-// =====================================================
-// MARK: - SYSTEM OBSERVER HOOKS (OPTIONAL)
-// =====================================================
-
-public protocol DVSMSystemObserver {
-
-    func onBootstrapComplete(attestation: DVSMBootstrapAttestation)
-    func onSystemSealed()
-    func onSystemDegraded(reason: String)
-}
-// =====================================================
-
-// =====================================================
-// DVSM v16.x — SUSTAINABILITY + SCALE ADAPTATION LAYER
-// ENVIRONMENTAL EFFICIENCY / LARGE-SCALE DEPLOYMENT ADD-ON
-// =====================================================
-//
-// AUTHOR:
-//   DVSM Extension Layer (User-defined integration)
-//
-// PURPOSE:
-//   Introduces energy-aware, compute-scaled execution profiles
-//   for large-scale or resource-constrained DVSM deployments.
-//
-// DESIGN GOALS:
-//
-//   ✔ reduce unnecessary governance overhead in stable regimes
-//   ✔ enable adaptive fidelity vs compute tradeoff
-//   ✔ allow energy-aware execution throttling
-//   ✔ preserve deterministic semantics under scaling
-//   ✔ remain fully non-invasive to core DVSM logic
-//
-// =====================================================
-
-import Foundation
-import CryptoKit
-
-// =====================================================
-// MARK: - SUSTAINABILITY EXECUTION MODE
-// =====================================================
-
-public enum DVSMSustainabilityMode: String, Sendable {
-
-    /// Maximum accuracy, full governance stack enabled
-    case fullFidelity
-
-    /// Balanced mode (default for production systems)
-    case adaptiveBalanced
-
-    /// Reduced compute footprint (large-scale / edge systems)
-    case efficiencyOptimized
-
-    /// Extreme low-power / degraded compute environments
-    case ultraLowPower
-}
-
-// =====================================================
-// MARK: - ENERGY + COMPUTE BUDGET MODEL
-// =====================================================
-
-public struct DVSMResourceBudget: Sendable {
-
-    /// Approximate compute allowance per cycle (abstract units)
-    public var computeBudget: Double
-
-    /// Energy sensitivity factor (higher = more aggressive throttling)
-    public var energySensitivity: Double
-
-    /// Maximum allowable governance depth (layers executed)
-    public var maxGovernanceDepth: Int
-
-    /// Whether cryptographic verification is fully enabled
-    public var enableFullCryptoAudit: Bool
-
-    public init(
-        computeBudget: Double,
-        energySensitivity: Double,
-        maxGovernanceDepth: Int,
-        enableFullCryptoAudit: Bool
-    ) {
-        self.computeBudget = computeBudget
-        self.energySensitivity = energySensitivity
-        self.maxGovernanceDepth = maxGovernanceDepth
-        self.enableFullCryptoAudit = enableFullCryptoAudit
-    }
-}
-
-// =====================================================
-// MARK: - EXTENDED DVSM CONFIG (NON-BREAKING ADDITION)
-// =====================================================
-
-public extension DVSMConfig {
-
-    /// Sustainability mode selector
-    var sustainabilityMode: DVSMSustainabilityMode {
-        get { _sustainabilityMode }
-        set { _sustainabilityMode = newValue }
-    }
-
-    /// Internal backing storage (non-breaking pattern via computed shim)
-    private var _sustainabilityMode: DVSMSustainabilityMode {
-        get {
-            // default safe fallback
-            return .adaptiveBalanced
-        }
-        set { _ = newValue }
-    }
-
-    /// Derived resource budget from sustainability mode
-    func derivedResourceBudget() -> DVSMResourceBudget {
-
-        switch sustainabilityMode {
-
-        case .fullFidelity:
-            return DVSMResourceBudget(
-                computeBudget: 1.0,
-                energySensitivity: 0.1,
-                maxGovernanceDepth: Int.max,
-                enableFullCryptoAudit: true
-            )
-
-        case .adaptiveBalanced:
-            return DVSMResourceBudget(
-                computeBudget: 0.6,
-                energySensitivity: 0.4,
-                maxGovernanceDepth: 6,
-                enableFullCryptoAudit: true
-            )
-
-        case .efficiencyOptimized:
-            return DVSMResourceBudget(
-                computeBudget: 0.3,
-                energySensitivity: 0.7,
-                maxGovernanceDepth: 3,
-                enableFullCryptoAudit: false
-            )
-
-        case .ultraLowPower:
-            return DVSMResourceBudget(
-                computeBudget: 0.1,
-                energySensitivity: 1.0,
-                maxGovernanceDepth: 1,
-                enableFullCryptoAudit: false
-            )
-        }
-    }
-}
-
-// =====================================================
-// MARK: - LIFECYCLE AWARE ENERGY GATE
-// =====================================================
-
-public extension DVSMSystemLifecycleManaging {
-
-    /// Determines whether heavy governance layers should execute
     func shouldRunFullGovernance(
         state: DVSMSystemState,
         config: DVSMConfig
@@ -573,7 +445,6 @@ public extension DVSMSystemLifecycleManaging {
             return false
         }
 
-        // Ultra-low-power systems bypass heavy governance
         if budget.maxGovernanceDepth <= 1 {
             return false
         }
@@ -581,7 +452,6 @@ public extension DVSMSystemLifecycleManaging {
         return budget.enableFullCryptoAudit
     }
 
-    /// Adaptive degradation trigger for sustainability pressure
     func evaluateEnergyPressure(
         estimatedLoad: Double,
         config: DVSMConfig
@@ -598,103 +468,48 @@ public extension DVSMSystemLifecycleManaging {
 }
 
 // =====================================================
-// MARK: - GOVERNANCE THROTTLING POLICY
-// =====================================================
-
-public struct DVSMGovernanceThrottlePolicy: Sendable {
-
-    /// Reduces identifiability checks under low-energy mode
-    public var reduceMDDChecks: Bool
-
-    /// Disables cross-shard verification under constraints
-    public var disableCrossShardVerification: Bool
-
-    /// Skips non-critical audit DAG writes
-    public var skipNonCriticalAuditWrites: Bool
-
-    public init(
-        reduceMDDChecks: Bool,
-        disableCrossShardVerification: Bool,
-        skipNonCriticalAuditWrites: Bool
-    ) {
-        self.reduceMDDChecks = reduceMDDChecks
-        self.disableCrossShardVerification = disableCrossShardVerification
-        self.skipNonCriticalAuditWrites = skipNonCriticalAuditWrites
-    }
-
-    /// Default policy derived from resource budget
-    public static func from(_ budget: DVSMResourceBudget) -> DVSMGovernanceThrottlePolicy {
-
-        if budget.computeBudget < 0.2 {
-            return DVSMGovernanceThrottlePolicy(
-                reduceMDDChecks: true,
-                disableCrossShardVerification: true,
-                skipNonCriticalAuditWrites: true
-            )
-        }
-
-        if budget.computeBudget < 0.6 {
-            return DVSMGovernanceThrottlePolicy(
-                reduceMDDChecks: false,
-                disableCrossShardVerification: true,
-                skipNonCriticalAuditWrites: false
-            )
-        }
-
-        return DVSMGovernanceThrottlePolicy(
-            reduceMDDChecks: false,
-            disableCrossShardVerification: false,
-            skipNonCriticalAuditWrites: false
-        )
-    }
-}
-
-// =====================================================
-// MARK: - SUSTAINABILITY AUDIT EXTENSION
+// MARK: - SUSTAINABILITY AUDIT
 // =====================================================
 
 public struct DVSMSustainabilityAudit {
 
     public static func estimateEfficiencyGain(
-        baselineCompute: Double,
-        optimizedCompute: Double
+        baseline: Double,
+        optimized: Double
     ) -> Double {
 
-        guard baselineCompute > 0 else { return 0 }
-        return 1.0 - (optimizedCompute / baselineCompute)
-    }
-
-    public static func validateSafeDegradation(
-        mode: DVSMSustainabilityMode
-    ) -> Bool {
-
-        switch mode {
-        case .ultraLowPower:
-            // requires explicit external attestation in real system
-            return true
-        default:
-            return true
-        }
+        guard baseline > 0 else { return 0 }
+        return 1.0 - (optimized / baseline)
     }
 }
 
 // =====================================================
-// MARK: - SYSTEM INTEGRATION SUMMARY
+// MARK: - WHITEPAPER ADDENDUM (SPEC LAYER ONLY)
 // =====================================================
 //
-// This layer introduces:
+// This section is intentionally NON-executable.
 //
-//   ✔ energy-aware DVSM execution scaling
-//   ✔ compute budget abstraction model
-//   ✔ governance throttling policies
-//   ✔ adaptive degradation control
-//   ✔ sustainability-safe execution modes
+// It formalizes DVSM sustainability behavior:
+// - energy-aware compute scaling
+// - bounded governance execution
+// - deterministic degradation states
+// - race-to-sleep optimization model
 //
-// WITHOUT violating DVSM principles:
+// Key:
+// public static let originator = DVSMAuthor(
+    fullName: "Daniel J. Dillberg",
+    identifier: "dj-dillberg",
+    role: "DVSM v16.x System Architect"
+)
 //
-//   - deterministic behavior preserved
-//   - no core engine modification
-//   - no semantic override of governance logic
-//   - fully optional activation layer
+// =====================================================
+//
+// CORE PRINCIPLE:
+//
+// DVSM is a constrained optimization system:
+//
+//   preserve correctness
+//   minimize energy usage
+//   maintain deterministic auditability
 //
 // =====================================================
