@@ -1,0 +1,151 @@
+// =====================================================
+// DVSM v16.2-R — EXECUTION & PHYSICAL INTEGRITY LAYER
+// FINAL ENFORCEMENT SUBSTRATE (BIH + DAI + RUNTIME PROBES)
+// =====================================================
+
+import Foundation
+import CryptoKit
+import simd
+
+// =====================================================
+// MARK: - SHARED SIGNAL MODEL
+// =====================================================
+
+public struct RuntimeSignals: Sendable {
+    public let latencyMs: Double
+    public let entropy: SIMD4<Float>
+}
+
+// =====================================================
+// MARK: - HARDWARE IDENTITY MODEL (BIH)
+// =====================================================
+
+public struct BoundaryIdentity: Sendable {
+    public let hardwareHash: Data
+    public let latencySignature: [UInt64]
+}
+
+// =====================================================
+// MARK: - EXECUTION REPORT
+// =====================================================
+
+public struct ExecutionReport: Sendable {
+    public let observedDelta: Double
+    public let integrityValid: Bool
+}
+
+// =====================================================
+// MARK: - EXECUTION ERRORS
+// =====================================================
+
+public enum ExecutionFault: Error {
+    case observerDrift
+    case instrumentationMismatch
+    case hardwareInconsistency
+    case executionInvalid
+}
+
+// =====================================================
+// MARK: - PROBE PAIR (DAI SYSTEM)
+// =====================================================
+
+public struct ProbePair {
+    public let control: Double
+    public let probe: Double
+
+    public func predictedDelta() -> Double {
+        control - probe
+    }
+}
+
+// =====================================================
+// MARK: - EXECUTION ENGINE (FINAL FORM)
+// =====================================================
+
+public final class DVSMExecutionGovernor {
+
+    private let identity: BoundaryIdentity
+
+    private let maxNoise: Double
+
+    public init(identity: BoundaryIdentity, maxNoise: Double) {
+        self.identity = identity
+        self.maxNoise = maxNoise
+    }
+
+    // =====================================================
+    // MARK: - BIH CHECK (PHYSICAL STABILITY)
+    // =====================================================
+
+    public func verifyIdentity(current: BoundaryIdentity) throws {
+
+        if current.hardwareHash != identity.hardwareHash {
+            throw ExecutionFault.hardwareInconsistency
+        }
+
+        let mismatch = zip(current.latencySignature, identity.latencySignature)
+            .map { abs(Int64($0) - Int64($1)) }
+
+        if mismatch.contains(where: { $0 > 1000 }) {
+            throw ExecutionFault.observerDrift
+        }
+    }
+
+    // =====================================================
+    // MARK: - DAI EXECUTION (DETERMINISTIC INVARIANCE TEST)
+    // =====================================================
+
+    public func executeWithProbes(
+        action: Double
+    ) throws -> ExecutionReport {
+
+        let pair = generateProbePair(for: action)
+
+        let predicted = pair.predictedDelta()
+        let observed = simulateHardwareExecution(action)
+
+        let delta = abs(predicted - observed)
+
+        if delta > maxNoise {
+            throw ExecutionFault.instrumentationMismatch
+        }
+
+        return ExecutionReport(
+            observedDelta: observed,
+            integrityValid: true
+        )
+    }
+
+    // =====================================================
+    // MARK: - PROBE GENERATION (CONTROLLED DUAL PATH)
+    // =====================================================
+
+    private func generateProbePair(for input: Double) -> ProbePair {
+        ProbePair(
+            control: input * 1.01,
+            probe: input * 0.99
+        )
+    }
+
+    // =====================================================
+    // MARK: - EXECUTION SIMULATION LAYER
+    // =====================================================
+
+    private func simulateHardwareExecution(_ input: Double) -> Double {
+        // deterministic placeholder model of physical response
+        return input * 0.5
+    }
+
+    // =====================================================
+    // MARK: - FULL EXECUTION GUARD
+    // =====================================================
+
+    public func execute(
+        action: Double,
+        currentIdentity: BoundaryIdentity
+    ) throws -> ExecutionReport {
+
+        try verifyIdentity(current: currentIdentity)
+        return try executeWithProbes(action: action)
+    }
+}
