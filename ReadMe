@@ -809,3 +809,296 @@ public struct DVSMSustainabilityAudit {
 // =====================================================
 // MARK: - END OF ADD-ON README LAYER
 // =====================================================
+//// =====================================================
+// MARK: - OPTIONAL EXTENSIONS (NON-CORE MODULES)
+// =====================================================
+//
+// The following modules are NOT part of DVSM core semantics.
+// They are safe, removable extensions that do not affect:
+//
+//   - Arbitration logic
+//   - Ledger integrity
+//   - Classification rules
+//   - System determinism
+//
+// =====================================================
+//// =====================================================
+// DVSM v16.x — ENERGY GOVERNANCE BOUNDARY LAYER (EGBL)
+// OPTIONAL SUSTAINABILITY ADD-ON MODULE
+// =====================================================
+//
+// PURPOSE:
+// Provides energy-aware execution scaling WITHOUT affecting
+// DVSM determinism, arbitration, or ledger semantics.
+//
+// ARCHITECTURAL GUARANTEE:
+//   Energy is a CONSTRAINT signal, not a decision authority.
+// =====================================================
+
+import Foundation
+import CryptoKit
+// =====================================================
+// MARK: - LAYER 1: SYSTEM INTENT (NON-EXECUTABLE CONTRACT)
+// =====================================================
+
+//
+// This module introduces bounded energy governance:
+//
+//   - adaptive compute scaling
+//   - safe degradation modes
+//   - race-to-sleep batching
+//
+// It explicitly MUST NOT:
+//   - alter arbitration logic
+//   - modify ledger semantics
+//   - influence classification rules
+//   - interfere with provenance integrity
+//
+
+// =====================================================
+// MARK: - LAYER 2: MODE DEFINITIONS
+// =====================================================
+
+public enum DVSMSustainabilityMode: String, Sendable {
+    case fullFidelity
+    case adaptiveBalanced
+    case efficiencyOptimized
+    case ultraLowPower
+}
+
+// =====================================================
+// MARK: - LAYER 3: RESOURCE BOUNDARY MODEL
+// =====================================================
+
+public struct DVSMResourceBudget: Sendable {
+
+    public let computeBudget: Double
+    public let energySensitivity: Double
+    public let maxGovernanceDepth: Int
+    public let enableFullCryptoAudit: Bool
+}
+
+// =====================================================
+// MARK: - LAYER 4: CONFIG DERIVATION (PURE FUNCTION)
+// =====================================================
+
+public struct DVSMConfig: Sendable {
+
+    public var sustainabilityMode: DVSMSustainabilityMode = .adaptiveBalanced
+
+    public init() {}
+
+    public func derivedResourceBudget() -> DVSMResourceBudget {
+
+        switch sustainabilityMode {
+
+        case .fullFidelity:
+            return DVSMResourceBudget(
+                computeBudget: 1.0,
+                energySensitivity: 0.1,
+                maxGovernanceDepth: Int.max,
+                enableFullCryptoAudit: true
+            )
+
+        case .adaptiveBalanced:
+            return DVSMResourceBudget(
+                computeBudget: 0.6,
+                energySensitivity: 0.4,
+                maxGovernanceDepth: 6,
+                enableFullCryptoAudit: true
+            )
+
+        case .efficiencyOptimized:
+            return DVSMResourceBudget(
+                computeBudget: 0.3,
+                energySensitivity: 0.7,
+                maxGovernanceDepth: 3,
+                enableFullCryptoAudit: false
+            )
+
+        case .ultraLowPower:
+            return DVSMResourceBudget(
+                computeBudget: 0.1,
+                energySensitivity: 1.0,
+                maxGovernanceDepth: 1,
+                enableFullCryptoAudit: false
+            )
+        }
+    }
+}
+
+// =====================================================
+// MARK: - LAYER 5: ENERGY-AWARE CONTROLLER CONTRACT
+// =====================================================
+
+public protocol DVSMEnergyAwareController {
+
+    func evaluateEnergyPressure(
+        estimatedLoad: Double,
+        config: DVSMConfig
+    ) -> DVSMSystemState
+
+    func makeThrottlePolicy(
+        from config: DVSMConfig
+    ) -> DVSMGovernanceThrottlePolicy
+}
+
+// =====================================================
+// MARK: - LAYER 6: DEFAULT ENERGY GOVERNANCE LOGIC
+// =====================================================
+
+public extension DVSMEnergyAwareController {
+
+    func evaluateEnergyPressure(
+        estimatedLoad: Double,
+        config: DVSMConfig
+    ) -> DVSMSystemState {
+
+        let budget = config.derivedResourceBudget()
+
+        if estimatedLoad > budget.computeBudget * 1.5 {
+            return .degraded
+        }
+
+        return .ready
+    }
+
+    func makeThrottlePolicy(
+        from config: DVSMConfig
+    ) -> DVSMGovernanceThrottlePolicy {
+
+        let budget = config.derivedResourceBudget()
+        return DVSMGovernanceThrottlePolicy.from(budget)
+    }
+}
+
+// =====================================================
+// MARK: - LAYER 7: RACE-TO-SLEEP SCHEDULER
+// =====================================================
+
+public struct DVSMRaceToSleepScheduler {
+
+    public static func shouldBatchOperations(
+        load: Double,
+        config: DVSMConfig
+    ) -> Bool {
+
+        let budget = config.derivedResourceBudget()
+        return load < (budget.computeBudget * 0.4)
+    }
+
+    public static func recommendedDelay(
+        load: Double,
+        config: DVSMConfig
+    ) -> TimeInterval {
+
+        let budget = config.derivedResourceBudget()
+
+        switch load {
+        case ..<0.2: return 2.5
+        case ..<0.5: return 1.0
+        case ..<1.0: return 0.2
+        default: return 0.0
+        }
+    }
+}
+
+// =====================================================
+// MARK: - LAYER 8: ENERGY RESOURCE ENVELOPE
+// =====================================================
+
+public struct DVSMResourceEnvelope: Sendable {
+
+    public let mode: DVSMSustainabilityMode
+    public let computeBudget: Double
+    public let energyCeiling: Double
+    public let batchWindow: TimeInterval
+
+    public static func from(_ config: DVSMConfig) -> DVSMResourceEnvelope {
+
+        let budget = config.derivedResourceBudget()
+
+        let delay = DVSMRaceToSleepScheduler.recommendedDelay(
+            load: budget.computeBudget,
+            config: config
+        )
+
+        return DVSMResourceEnvelope(
+            mode: config.sustainabilityMode,
+            computeBudget: budget.computeBudget,
+            energyCeiling: budget.energySensitivity,
+            batchWindow: delay
+        )
+    }
+}
+
+// =====================================================
+// MARK: - LAYER 9: LIFECYCLE INTEGRATION (SAFE EXTENSION ONLY)
+// =====================================================
+
+public extension DVSMSystemLifecycleManaging {
+
+    func applySustainabilityTransition(
+        currentState: DVSMSystemState,
+        estimatedLoad: Double,
+        config: DVSMConfig
+    ) -> DVSMSystemState {
+
+        let budget = config.derivedResourceBudget()
+
+        if estimatedLoad > budget.computeBudget * 1.5 {
+            return .degraded
+        }
+
+        if budget.maxGovernanceDepth <= 1 {
+            return .sealed
+        }
+
+        return currentState
+    }
+}
+
+// =====================================================
+// MARK: - LAYER 10: SYSTEM STATE (AUTHORITATIVE EXTERNAL CONTRACT)
+// =====================================================
+
+public enum DVSMSystemState: String, Sendable {
+    case uninitialized
+    case bootstrapping
+    case ready
+    case sealed
+    case degraded
+    case failed
+}
+
+// =====================================================
+// MARK: - LAYER 11: SAFETY INVARIANTS (ABSOLUTE RULES)
+// =====================================================
+
+//
+// HARD GUARANTEES:
+//
+// 1. Energy NEVER affects arbitration
+// 2. Energy NEVER modifies ledger
+// 3. Energy NEVER modifies classification
+// 4. Energy ONLY affects execution pacing
+//
+
+// =====================================================
+// MARK: - LAYER 12: ARCHITECTURAL GUARANTEE
+// =====================================================
+
+//
+// DVSM Sustainability Add-On is:
+//
+//   ✔ fully optional
+//   ✔ fully removable
+//   ✔ semantically isolated
+//   ✔ deterministic-safe
+//
+// Core DVSM remains unchanged under all conditions.
+//
+
+// =====================================================
+// END OF EGBL MODULE
+// =====================================================
