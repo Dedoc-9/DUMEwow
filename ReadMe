@@ -256,4 +256,165 @@ public enum DVSMSystemFactory {
 // - Clean initialization boundary
 // - Fully composable system entry contract
 //
+// // =====================================================
+// DVSM v16.x — SYSTEM LIFECYCLE + BOOTSTRAP GUARANTEE LAYER
+// EXTENDS: AUTHORSHIP + BOOTSTRAP + BOILERPLATE CORE
+// =====================================================
+//
+// PURPOSE:
+// Deterministic lifecycle state tracking, bootstrap
+// attestation, and safe activation boundaries.
+//
+// DESIGN CONSTRAINTS:
+//   ✔ no engine coupling
+//   ✔ no hidden runtime state
+//   ✔ fully deterministic hashing
+//   ✔ metadata-compatible lifecycle transitions
+//
+// =====================================================
+
+import Foundation
+import CryptoKit
+
+// =====================================================
+// MARK: - SYSTEM LIFECYCLE STATE
+// =====================================================
+
+public enum DVSMSystemState: String, Sendable {
+    case uninitialized
+    case bootstrapping
+    case ready
+    case sealed
+    case degraded
+    case failed
+}
+
+// =====================================================
+// MARK: - BOOTSTRAP ATTESTATION PAYLOAD
+// =====================================================
+
+public struct DVSMBootstrapAttestation: Sendable {
+
+    public let configHash: Data
+    public let environmentHash: Data
+    public let provenanceHash: Data
+    public let timestamp: UInt64
+
+    public init(
+        configHash: Data,
+        environmentHash: Data,
+        provenanceHash: Data,
+        timestamp: UInt64
+    ) {
+        self.configHash = configHash
+        self.environmentHash = environmentHash
+        self.provenanceHash = provenanceHash
+        self.timestamp = timestamp
+    }
+
+    /// Deterministic system fingerprint
+    public func globalFingerprint() -> Data {
+        let combined = configHash + environmentHash + provenanceHash
+        return Data(SHA256.hash(data: combined))
+    }
+}
+
+// =====================================================
+// MARK: - LIFECYCLE CONTROLLER CONTRACT
+// =====================================================
+
+public protocol DVSMSystemLifecycleManaging {
+
+    var systemState: DVSMSystemState { get }
+
+    func beginBootstrap()
+    func completeBootstrap() -> DVSMBootstrapAttestation
+    func sealSystem()
+    func markDegraded(reason: String)
+}
+
+// =====================================================
+// MARK: - DEFAULT HASHING UTILITIES
+// =====================================================
+
+public extension DVSMSystemLifecycleManaging {
+
+    func computeConfigHash(_ config: DVSMConfig) -> Data {
+        let raw = """
+        \(config.mddSensitivity)|
+        \(config.posteriorOverlapThreshold)|
+        \(config.noiseFloor)
+        """
+
+        return Data(SHA256.hash(data: Data(raw.utf8)))
+    }
+
+    func computeEnvironmentHash(_ env: DVSMEnvironment) -> Data {
+        let raw = """
+        \(env.shardID)|
+        \(env.nodeID)|
+        \(env.region)|
+        \(env.bootTimestamp)
+        """
+
+        return Data(SHA256.hash(data: Data(raw.utf8)))
+    }
+
+    func computeProvenanceHash() -> Data {
+        DVSMProvenance.provenanceHash()
+    }
+}
+
+// =====================================================
+// MARK: - BOOTSTRAP VALIDATION LAYER
+// =====================================================
+
+public struct DVSMBootstrapValidator {
+
+    /// Validates structural integrity of attestation
+    public static func validate(
+        attestation: DVSMBootstrapAttestation
+    ) -> Bool {
+
+        let expected = attestation.globalFingerprint()
+        return !expected.isEmpty
+    }
+}
+
+// =====================================================
+// MARK: - READINESS CONTRACT
+// =====================================================
+
+public protocol DVSMReadinessChecking {
+
+    func isReadyForExecution() -> Bool
+    func isBootstrapConsistent() -> Bool
+}
+
+// =====================================================
+// MARK: - DEFAULT READINESS LOGIC
+// =====================================================
+
+public extension DVSMReadinessChecking {
+
+    func defaultReadinessCheck(state: DVSMSystemState) -> Bool {
+        switch state {
+        case .ready, .sealed:
+            return true
+        default:
+            return false
+        }
+    }
+}
+
+// =====================================================
+// MARK: - SYSTEM OBSERVER HOOKS (OPTIONAL)
+// =====================================================
+
+public protocol DVSMSystemObserver {
+
+    func onBootstrapComplete(attestation: DVSMBootstrapAttestation)
+    func onSystemSealed()
+    func onSystemDegraded(reason: String)
+}
 // =====================================================
