@@ -104,6 +104,9 @@ public struct DVSMConfig: Sendable {
     public func resourceEnvelope() -> DVSMResourceEnvelope {
         DVSMResourceEnvelope.from(sustainabilityMode)
     }
+
+// NEW: energy-aware scheduling control
+    public var latencyThreshold: TimeInterval = 0.05
 }
 
 // =====================================================
