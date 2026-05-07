@@ -1,0 +1,312 @@
+// =====================================================
+// DVSM v16.x — HUMAN-READABLE ARCHITECTURE GUIDE LAYER (EXPANDED)
+// =====================================================
+//
+// PURPOSE:
+// This section explains DVSM as a layered reasoning system
+// in progressively deeper intuition steps.
+//
+// It is NON-EXECUTABLE documentation only.
+//
+// The intent is to make the architecture understandable
+// without requiring mathematical or systems expertise.
+//
+// =====================================================
+
+/*
+=====================================================
+LAYER 1 — WHAT THE SYSTEM ACTUALLY IS
+=====================================================
+
+At the most basic level, DVSM is a structured decision system.
+
+It takes in information from the outside world and produces a
+controlled, predictable response.
+
+Every cycle follows the same loop:
+
+1. Receive signals
+2. Interpret meaning
+3. Decide allowable action
+4. Record outcome permanently
+
+What matters here is not speed or intelligence,
+but consistency.
+
+Core idea:
+
+    DVSM is not a predictive system.
+    It is a resolution system.
+
+It does not try to “guess the future.”
+It ensures that given the same inputs,
+the same outputs will always occur.
+
+=====================================================
+LAYER 2 — WHY INTERPRETATION COMES BEFORE ACTION
+=====================================================
+
+Most systems fail because they react too quickly.
+
+They treat all incoming signals as equal,
+and immediately respond.
+
+DVSM explicitly avoids this.
+
+Instead, it inserts a mandatory interpretation stage.
+
+Every signal must first be understood in context:
+
+- Is this a safety issue?
+- Is this a stability issue?
+- Or is this just an optimization concern?
+
+This prevents low-priority signals from interfering
+with critical system behavior.
+
+Core idea:
+
+    Understanding always comes before execution.
+
+Nothing is acted on until its meaning is determined.
+
+=====================================================
+LAYER 3 — WHY EVERYTHING IS CLASSIFIED
+=====================================================
+
+Once signals are understood, they are grouped into categories.
+
+This is not organizational — it is structural.
+
+DVSM uses three fundamental strata:
+
+1. Integrity
+   → Rules that must never be violated
+   → System safety constraints
+   → Non-negotiable conditions
+
+2. Stability
+   → System health and consistency
+   → Drift control and coherence maintenance
+
+3. Energy
+   → Performance, speed, and efficiency
+   → Optimization space under safe conditions
+
+This classification ensures that all system inputs
+are not treated as equal “votes,” but as structured constraints.
+
+Core idea:
+
+    Not all inputs are allowed to influence decisions equally.
+
+=====================================================
+LAYER 4 — WHY ORDER OF IMPORTANCE IS FIXED
+=====================================================
+
+After classification, DVSM applies a strict ordering rule.
+
+This ordering never changes, regardless of load, time, or context:
+
+1. Integrity overrides everything
+2. Stability overrides performance
+3. Energy is only considered when safe
+
+This prevents negotiation between incompatible concerns.
+
+For example:
+
+- The system will never sacrifice correctness for speed
+- It will never ignore instability to save resources
+- It will only optimize energy when the system is already safe
+
+Core idea:
+
+    DVSM does not “balance trade-offs.”
+    It enforces hierarchy.
+
+=====================================================
+LAYER 5 — WHY THE LEDGER EXISTS
+=====================================================
+
+DVSM records every decision in a permanent ledger.
+
+This ledger is:
+
+- append-only (nothing is overwritten)
+- fully reproducible
+- fully auditable
+- deterministic across replays
+
+This creates a system memory that cannot drift or be altered.
+
+It ensures that:
+
+- past behavior is always reconstructable
+- system evolution is transparent
+- no hidden state changes can exist
+
+Core idea:
+
+    The system cannot rewrite its history.
+
+It can only extend it.
+
+=====================================================
+LAYER 6 — HOW THE SYSTEM BEHAVES UNDER PRESSURE
+=====================================================
+
+Real systems are constrained by resources:
+
+- CPU limits
+- memory limits
+- energy limits
+- latency constraints
+
+DVSM handles this without changing correctness.
+
+Instead of breaking or mutating behavior,
+it adjusts execution intensity.
+
+This means:
+
+- it can slow down processing
+- it can defer non-critical operations
+- it can reduce optimization depth
+
+But critically:
+
+- it never changes what is considered correct
+- it never alters classification outcomes
+- it never modifies arbitration rules
+
+Core idea:
+
+    Constraints affect speed, not truth.
+
+=====================================================
+LAYER 7 — WHY THE ENERGY LAYER EXISTS
+=====================================================
+
+The Energy Governance Boundary Layer (EGBL)
+is the outermost control mechanism.
+
+It is often misunderstood, so clarity is important:
+
+It does NOT decide outcomes.
+
+It only controls how much computation is used.
+
+Think of it as a throttle:
+
+- more energy → higher fidelity execution
+- less energy → reduced computational depth
+
+But in all cases:
+
+- decisions remain identical
+- logic remains identical
+- correctness remains unchanged
+
+Core idea:
+
+    Energy affects execution cost, not system meaning.
+
+=====================================================
+LAYER 8 — WHY THIS SEPARATION IS IMPORTANT
+=====================================================
+
+Most systems fail when under stress because they
+begin to change how they reason.
+
+DVSM prevents this entirely by separation:
+
+- Meaning is fixed (classification layer)
+- Order is fixed (arbitration hierarchy)
+- History is fixed (ledger)
+- Execution speed is flexible (energy layer)
+
+This separation ensures the system cannot “drift”
+into inconsistent behavior.
+
+Core idea:
+
+    DVSM never adapts what is true.
+    Only how fast truth is computed.
+
+=====================================================
+LAYER 9 — WHAT MAKES THIS DESIGN DIFFERENT
+=====================================================
+
+Traditional systems mix:
+
+- decision logic
+- optimization logic
+- resource management
+
+DVSM separates them completely.
+
+This produces three guarantees:
+
+1. Determinism
+   → same input always produces same output
+
+2. Auditability
+   → every decision can be traced
+
+3. Stability under load
+   → system degrades gracefully without semantic change
+
+Core idea:
+
+    Complexity is allowed.
+    Ambiguity is not.
+
+=====================================================
+LAYER 10 — FINAL INTUITION (EVERYDAY VERSION)
+=====================================================
+
+If simplified completely:
+
+DVSM is a system that:
+
+- understands before acting
+- prioritizes safety over performance
+- never forgets past decisions
+- slows down under pressure without changing correctness
+
+The energy system is not the “brain.”
+
+It is just the control dial.
+
+Core idea:
+
+    DVSM is a truth-preserving system,
+    not a performance-driven one.
+
+// =====================================================
+// MARK: - WHY THE LAYERED DESIGN EXISTS
+// =====================================================
+//
+// Everyday systems mix:
+//   - interpretation (what does data mean?)
+//   - policy (what should we do?)
+//   - execution (what happens next?)
+//
+// DVSM separates these completely.
+//
+// WHY:
+//
+//   If meaning and action mix → instability
+//   If policy and execution mix → nondeterminism
+//   If interpretation is unstructured → drift
+//
+// DVSM solves this by enforcing:
+//   → strict stratification
+//   → irreversible decision collapse
+//   → ledger-bound history
+//
+=====================================================
+END OF EXPANDED HUMAN ARCHITECTURE GUIDE LAYER
+=====================================================
+*/
