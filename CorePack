@@ -1,0 +1,226 @@
+// =====================================================
+// DVSM COREPACK v17.x — UNIFIED SYSTEM EVOLUTION
+// INCLUDES:
+//   - Authorship + provenance
+//   - Runtime binding layer
+//   - Lifecycle governance
+//   - Identifiability + noise geometry
+//   - Execution arbitration
+//   - Sustainability / energy scaling (NEW CORE INTEGRATION)
+// =====================================================
+
+import Foundation
+import CryptoKit
+
+// =====================================================
+// MARK: - AUTHORSHIP CORE
+// =====================================================
+
+public struct DVSMAuthor: Sendable, Codable {
+    public let fullName: String
+    public let identifier: String
+    public let role: String
+}
+
+// =====================================================
+// MARK: - PROVENANCE ROOT
+// =====================================================
+
+public enum DVSMProvenance {
+
+    public static let originator = DVSMAuthor(
+        fullName: "Daniel J. Dillberg",
+        identifier: "dj-dillberg",
+        role: "DVSM System Architect"
+    )
+
+    public static var lineage: [DVSMAuthor] = [originator]
+
+    public static func hash() -> Data {
+        let raw = lineage.map {
+            "\($0.fullName)|\($0.identifier)|\($0.role)"
+        }.joined(separator: "::")
+
+        return Data(SHA256.hash(data: Data(raw.utf8)))
+    }
+}
+
+// =====================================================
+// MARK: - SUSTAINABILITY CORE (NOW FIRST-CLASS)
+// =====================================================
+
+public enum DVSMSustainabilityMode: String, Sendable {
+    case fullFidelity
+    case adaptiveBalanced
+    case efficiencyOptimized
+    case ultraLowPower
+}
+
+public struct DVSMResourceEnvelope: Sendable {
+
+    public let computeBudget: Double
+    public let governanceDepth: Int
+    public let cryptoAuditEnabled: Bool
+
+    public static func from(_ mode: DVSMSustainabilityMode) -> DVSMResourceEnvelope {
+        switch mode {
+
+        case .fullFidelity:
+            return .init(computeBudget: 1.0, governanceDepth: Int.max, cryptoAuditEnabled: true)
+
+        case .adaptiveBalanced:
+            return .init(computeBudget: 0.6, governanceDepth: 6, cryptoAuditEnabled: true)
+
+        case .efficiencyOptimized:
+            return .init(computeBudget: 0.3, governanceDepth: 3, cryptoAuditEnabled: false)
+
+        case .ultraLowPower:
+            return .init(computeBudget: 0.1, governanceDepth: 1, cryptoAuditEnabled: false)
+        }
+    }
+}
+
+// =====================================================
+// MARK: - SYSTEM CONFIG (EVOLVED)
+// =====================================================
+
+public struct DVSMConfig: Sendable {
+
+    // Identifiability
+    public var mddSensitivity: Double = 1.0
+    public var posteriorOverlapThreshold: Double = 0.15
+
+    // Noise geometry
+    public var globalNoiseEpsilon: Double = 0.05
+
+    // Execution safety
+    public var noiseFloor: Double = 0.0001
+    public var enableDAI: Bool = true
+    public var enableBIH: Bool = true
+
+    // Sustainability (NOW CORE FIELD)
+    public var sustainabilityMode: DVSMSustainabilityMode = .adaptiveBalanced
+
+    public func resourceEnvelope() -> DVSMResourceEnvelope {
+        DVSMResourceEnvelope.from(sustainabilityMode)
+    }
+}
+
+// =====================================================
+// MARK: - SYSTEM STATE MACHINE
+// =====================================================
+
+public enum DVSMSystemState: String, Sendable {
+    case uninitialized
+    case bootstrapping
+    case ready
+    case sealed
+    case degraded
+    case failed
+}
+
+// =====================================================
+// MARK: - ENVIRONMENT
+// =====================================================
+
+public struct DVSMEnvironment: Sendable {
+    public let shardID: String
+    public let nodeID: String
+    public let region: String
+    public let bootTimestamp: UInt64
+    public let hardwareSignature: Data
+}
+
+// =====================================================
+// MARK: - RUNTIME BINDING CONTRACT
+// =====================================================
+
+public protocol DVSMRuntimeBindable {
+
+    func attachMetadata(_ meta: [String: String])
+    func bootstrap(config: DVSMConfig, environment: DVSMEnvironment)
+}
+
+// =====================================================
+// MARK: - LIFECYCLE + SUSTAINABILITY COUPLING
+// =====================================================
+
+public protocol DVSMSystemLifecycleManaging {
+
+    var systemState: DVSMSystemState { get }
+
+    func beginBootstrap()
+    func completeBootstrap() -> Data
+    func sealSystem()
+    func markDegraded(reason: String)
+}
+
+// =====================================================
+// MARK: - ENERGY-AWARE EXECUTION GATE
+// =====================================================
+
+public extension DVSMSystemLifecycleManaging {
+
+    func shouldExecuteFullGovernance(
+        state: DVSMSystemState,
+        config: DVSMConfig
+    ) -> Bool {
+
+        let env = config.resourceEnvelope()
+
+        guard state == .ready || state == .sealed else {
+            return false
+        }
+
+        return env.governanceDepth > 1
+    }
+
+    func energyGate(
+        estimatedLoad: Double,
+        config: DVSMConfig
+    ) -> DVSMSystemState {
+
+        let env = config.resourceEnvelope()
+
+        if estimatedLoad > env.computeBudget * 1.5 {
+            return .degraded
+        }
+
+        return .ready
+    }
+}
+
+// =====================================================
+// MARK: - BOOTSTRAP ATTESTATION
+// =====================================================
+
+public struct DVSMBootstrapAttestation: Sendable {
+
+    public let configHash: Data
+    public let envHash: Data
+    public let provenanceHash: Data
+
+    public func fingerprint() -> Data {
+        Data(SHA256.hash(data: configHash + envHash + provenanceHash))
+    }
+}
+
+// =====================================================
+// MARK: - SYSTEM FACTORY
+// =====================================================
+
+public enum DVSMSystemFactory {
+
+    public static func bootstrap<R: DVSMRuntimeBindable>(
+        runtime: R,
+        config: DVSMConfig,
+        environment: DVSMEnvironment
+    ) {
+
+        runtime.bootstrap(config: config, environment: environment)
+        runtime.attachMetadata([
+            "author": DVSMProvenance.originator.fullName,
+            "mode": config.sustainabilityMode.rawValue
+        ])
+    }
+}
