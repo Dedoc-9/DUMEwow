@@ -416,6 +416,32 @@ public enum DVSMSystemFactory {
 }
 
 // =====================================================
+// MARK: - SYSTEM STATE AUTHORITY CONTRACT
+// =====================================================
+//
+// PURPOSE:
+// Establishes DVSMSystemState as a single source of truth
+// for all lifecycle, bootstrap, and sustainability transitions.
+//
+// RULE:
+// Only DVSMSystemLifecycleManaging implementations
+// are allowed to perform state transitions.
+//
+// All other layers (including sustainability) MUST
+// request state evaluation, not mutate state directly.
+// =====================================================
+
+public protocol DVSMSystemStateAuthority {
+
+    func currentState() -> DVSMSystemState
+
+    func transition(
+        to newState: DVSMSystemState,
+        reason: String
+    )
+}
+
+// =====================================================
 // MARK: - SYSTEM STATE (SINGLE SOURCE OF TRUTH)
 // =====================================================
 
@@ -427,6 +453,7 @@ public enum DVSMSystemState: String, Sendable {
     case degraded
     case failed
 }
+
 // =====================================================
 // MARK: - LIFECYCLE CONTROLLER CONTRACT
 // =====================================================
