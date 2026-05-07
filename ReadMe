@@ -629,3 +629,183 @@ public struct DVSMSustainabilityAudit {
 //   maintain deterministic auditability
 //
 // =====================================================
+// =====================================================
+// DVSM v16.x — OPTIONAL SUSTAINABILITY ADD-ON MODULE
+// README / DOCUMENTATION LAYER (SWIFT FORMAT)
+// =====================================================
+//
+// PURPOSE:
+// This file describes the Sustainability Add-On as a
+// non-core, optional extension layer for DVSM systems.
+//
+// It exists for:
+//   ✔ documentation embedding in Swift packages
+//   ✔ architecture-level onboarding
+//   ✔ deterministic system explanation
+//   ✔ deployment clarity in modular builds
+//
+// IMPORTANT:
+//   - This file contains NO runtime logic
+//   - This file is SAFE to exclude from builds
+//   - This file does NOT affect DVSM core behavior
+//
+// =====================================================
+// MARK: - MODULE CLASSIFICATION
+// =====================================================
+//
+// TYPE:
+//   Optional System Extension (Non-Core)
+//
+// DEPENDENCY LEVEL:
+//   Zero core dependency (documentation only)
+//
+// INTEGRATION STYLE:
+//   Protocol-based + configuration-driven
+//
+// =====================================================
+// MARK: - PURPOSE SUMMARY
+// =====================================================
+//
+// The Sustainability Add-On introduces an energy-aware
+// execution model for DVSM systems.
+//
+// It enables:
+//
+//   • adaptive compute scaling
+//   • energy-aware governance throttling
+//   • bounded degradation states
+//   • race-to-sleep optimization cycles
+//   • resource envelope abstraction
+//
+// WITHOUT altering:
+//
+//   • DVSM provenance system
+//   • DVSM bootstrap logic
+//   • DVSM execution contracts
+//   • DVSM determinism guarantees
+//
+// =====================================================
+// MARK: - ARCHITECTURAL POSITION
+// =====================================================
+//
+// CORE DVSM LAYERS:
+//
+//   1. Provenance Layer
+//   2. Configuration Layer
+//   3. Runtime Binding Contracts
+//   4. Lifecycle Management
+//   5. Execution Context
+//
+// OPTIONAL EXTENSION LAYERS:
+//
+//   • Sustainability Add-On (THIS MODULE)
+//
+// =====================================================
+// MARK: - KEY CAPABILITIES
+// =====================================================
+//
+// 1. ENERGY-AWARE EXECUTION
+//
+//    System evaluates runtime load vs compute budget
+//    and adjusts execution intensity accordingly.
+//
+// 2. COMPUTE BUDGET MODEL
+//
+//    DVSMResourceBudget defines:
+//      - compute capacity limits
+//      - energy sensitivity thresholds
+//      - governance depth constraints
+//      - audit strictness level
+//
+// 3. SAFE DEGRADATION MODEL
+//
+//    Instead of failure:
+//      ready → degraded → sealed
+//
+//    Ensures deterministic system transitions.
+//
+// 4. RACE-TO-SLEEP OPTIMIZATION
+//
+//    Batches operations during low activity periods
+//    to reduce energy usage and wake cycles.
+//
+// 5. GOVERNANCE THROTTLING
+//
+//    Dynamically adjusts:
+//      - verification depth
+//      - audit frequency
+//      - cross-shard validation intensity
+//
+// =====================================================
+// MARK: - OPTIONAL INTEGRATION MODEL
+// =====================================================
+//
+// Integration occurs ONLY through:
+//
+//   DVSMConfig.sustainabilityMode
+//   DVSMResourceBudget
+//   DVSMSystemLifecycleManaging extensions
+//   optional controller protocols
+//
+// No modification of core DVSM files is required.
+//
+// =====================================================
+// MARK: - MODES OF OPERATION
+// =====================================================
+//
+// DVSMSustainabilityMode:
+//
+//   • fullFidelity
+//       - maximum correctness
+//       - full audit + verification
+//
+//   • adaptiveBalanced
+//       - default production mode
+//       - dynamic scaling enabled
+//
+//   • efficiencyOptimized
+//       - reduced audit overhead
+//       - partial verification paths
+//
+//   • ultraLowPower
+//       - minimal compute footprint
+//       - strict execution ceilings
+//
+// =====================================================
+// MARK: - DESIGN GUARANTEES
+// =====================================================
+//
+// ✔ Deterministic behavior preserved
+// ✔ No core DVSM modification required
+// ✔ Fully optional and removable
+// ✔ Safe fallback to default DVSM behavior
+// ✔ Compatible with distributed deployments
+//
+// =====================================================
+// MARK: - SYSTEM VALUE
+// =====================================================
+//
+// This module is designed for:
+//
+//   • cloud-scale DVSM deployments
+//   • edge computing environments
+//   • energy-constrained systems
+//   • high-density compute orchestration
+//
+// It ensures DVSM remains operational across
+// heterogeneous infrastructure conditions.
+//
+// =====================================================
+// MARK: - REMOVAL SAFETY
+// =====================================================
+//
+// This module can be safely removed without:
+//
+//   ✘ breaking provenance
+//   ✘ affecting bootstrap sequence
+//   ✘ altering execution correctness
+//   ✘ changing system state semantics
+//
+// =====================================================
+// MARK: - END OF ADD-ON README LAYER
+// =====================================================
