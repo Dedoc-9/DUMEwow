@@ -1,0 +1,192 @@
+// =====================================================
+// DVSM v16.2-R — LEDGER & SYSTEM CLOSURE LAYER
+// PROVENANCE + REPLAY + GLOBAL STATE CONSENSUS
+// =====================================================
+
+import Foundation
+import CryptoKit
+
+// =====================================================
+// MARK: - CORE STATE EVENT
+// =====================================================
+
+public struct DVSMEvent: Sendable {
+    public let shard: UInt32
+    public let timestamp: UInt64
+
+    public let inputHash: Data
+    public let outputHash: Data
+
+    public let regimeState: Data
+    public let executionState: Data
+}
+
+// =====================================================
+// MARK: - GLOBAL STATE ROOT
+// =====================================================
+
+public struct DVSMGlobalState: Sendable {
+    public let rootHash: Data
+    public let sequence: UInt64
+}
+
+// =====================================================
+// MARK: - HASH UTIL
+// =====================================================
+
+public enum DVSMHash {
+    public static func digest(_ data: Data) -> Data {
+        Data(SHA256.hash(data: data))
+    }
+}
+
+// =====================================================
+// MARK: - LEDGER CORE (APPEND-ONLY STATE MACHINE)
+// =====================================================
+
+public final class DVSMLedger {
+
+    private var chain: [DVSMEvent] = []
+    private var lastHash: Data = Data()
+    private var sequence: UInt64 = 0
+
+    // =====================================================
+    // MARK: - APPEND EVENT (SYSTEM COMMIT POINT)
+    // =====================================================
+
+    public func append(
+        shard: UInt32,
+        inputHash: Data,
+        outputHash: Data,
+        regimeState: Data,
+        executionState: Data
+    ) -> DVSMGlobalState {
+
+        sequence += 1
+
+        let event = DVSMEvent(
+            shard: shard,
+            timestamp: sequence,
+            inputHash: inputHash,
+            outputHash: outputHash,
+            regimeState: regimeState,
+            executionState: executionState
+        )
+
+        chain.append(event)
+
+        let combined =
+            lastHash +
+            inputHash +
+            outputHash +
+            regimeState +
+            executionState
+
+        lastHash = DVSMHash.digest(combined)
+
+        return DVSMGlobalState(
+            rootHash: lastHash,
+            sequence: sequence
+        )
+    }
+
+    // =====================================================
+    // MARK: - REPLAY ENGINE (DETERMINISM VALIDATION)
+    // =====================================================
+
+    public func replay() -> [DVSMEvent] {
+        chain
+    }
+
+    // =====================================================
+    // MARK: - CONSISTENCY CHECK
+    // =====================================================
+
+    public func verifyIntegrity() -> Bool {
+
+        var tempHash = Data()
+        var tempSeq: UInt64 = 0
+
+        for event in chain {
+            tempSeq += 1
+
+            let recomputed =
+                tempHash +
+                event.inputHash +
+                event.outputHash +
+                event.regimeState +
+                event.executionState
+
+            tempHash = DVSMHash.digest(recomputed)
+
+            if event.timestamp != tempSeq {
+                return false
+            }
+        }
+
+        return tempHash == lastHash
+    }
+}
+
+// =====================================================
+// MARK: - SYSTEM INTEGRATION INTERFACE
+// =====================================================
+
+public final class DVSMSystem {
+
+    private let runtime: DVSMRuntimeSubstrate
+    private let governor: DVSMCoreGovernor
+    private let executor: DVSMExecutionGovernor
+    private let ledger: DVSMLedger
+
+    public init(
+        runtime: DVSMRuntimeSubstrate,
+        governor: DVSMCoreGovernor,
+        executor: DVSMExecutionGovernor,
+        ledger: DVSMLedger
+    ) {
+        self.runtime = runtime
+        self.governor = governor
+        self.executor = executor
+        self.ledger = ledger
+    }
+
+    // =====================================================
+    // MARK: - SINGLE SYSTEM PULSE (FULL CYCLE)
+    // =====================================================
+
+    public func pulse(
+        shard: UInt32,
+        inputHash: Data,
+        signals: RuntimeSignals,
+        executionInput: Double,
+        identity: BoundaryIdentity
+    ) throws -> DVSMGlobalState {
+
+        // 1. GOVERNANCE DECISION
+        let regime = governor.pulse(shard: shard, signals: signals)
+
+        // 2. EXECUTION VALIDATION
+        let execution = try executor.execute(
+            action: executionInput,
+            currentIdentity: identity
+        )
+
+        let executionHash = Data(
+            SHA256.hash(data: "\(execution.observedDelta)".data(using: .utf8)!)
+        )
+
+        let regimeHash = Data(
+            SHA256.hash(data: "\(regime)".data(using: .utf8)!)
+        )
+
+        // 3. LEDGER COMMIT (FINAL TRUTH BINDING)
+        return ledger.append(
+            shard: shard,
+            inputHash: inputHash,
+            outputHash: executionHash,
+            regimeState: regimeHash,
+            executionState: executionHash
+        )
+    }
+}
