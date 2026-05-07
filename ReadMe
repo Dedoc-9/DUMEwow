@@ -427,6 +427,19 @@ public enum DVSMSystemState: String, Sendable {
     case degraded
     case failed
 }
+// =====================================================
+// MARK: - LIFECYCLE CONTROLLER CONTRACT
+// =====================================================
+
+public protocol DVSMSystemLifecycleManaging {
+
+    var systemState: DVSMSystemState { get }
+
+    func beginBootstrap()
+    func completeBootstrap() -> DVSMBootstrapAttestation
+    func sealSystem()
+    func markDegraded(reason: String)
+}
 
 // =====================================================
 // MARK: - LIFECYCLE + ENERGY INTEGRATION
