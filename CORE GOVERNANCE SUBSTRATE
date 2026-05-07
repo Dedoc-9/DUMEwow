@@ -1,0 +1,172 @@
+// =====================================================
+// DVSM v16.2-R — CORE GOVERNANCE SUBSTRATE
+// REGIME + IDENTIFIABILITY + SYSTEM PULSE ENGINE
+// =====================================================
+
+import Foundation
+import simd
+
+// =====================================================
+// MARK: - SHARD + STATE DEFINITIONS
+// =====================================================
+
+public typealias ShardId = UInt32
+
+public enum RegimePhase: Sendable {
+    case settling
+    case stabilizing
+    case active
+    case degraded
+}
+
+// =====================================================
+// MARK: - MIGRATION STATE (UNIFIED MODEL)
+// =====================================================
+
+public struct MigrationState: Sendable {
+    public let phase: RegimePhase
+    public let samples: UInt64
+    public let confidence: Double
+}
+
+// =====================================================
+// MARK: - IDENTIFIABILITY RESULT
+// =====================================================
+
+public enum IdentifiabilityState: Sendable {
+    case unique
+    case collapsed(overlap: Double, drift: Double)
+}
+
+// =====================================================
+// MARK: - GLOBAL GOVERNANCE STATE
+// =====================================================
+
+public struct GovernanceState: Sendable {
+    public let shard: ShardId
+    public let migration: MigrationState
+    public let instability: Double
+}
+
+// =====================================================
+// MARK: - CORE GOVERNOR
+// =====================================================
+
+public final class DVSMCoreGovernor {
+
+    // Shared substrate (injected from runtime layer)
+    private let runtime: DVSMRuntimeSubstrate
+
+    // Migration registry
+    private var migrationTable: [ShardId: MigrationState] = [:]
+
+    public init(runtime: DVSMRuntimeSubstrate) {
+        self.runtime = runtime
+    }
+
+    // =====================================================
+    // MARK: - MIGRATION WEIGHTING
+    // =====================================================
+
+    private func credibility(for state: MigrationState) -> Double {
+
+        switch state.phase {
+        case .settling:
+            return 5.0
+
+        case .stabilizing:
+            return 1.0 + (4.0 * (1.0 - state.confidence))
+
+        case .active:
+            return 1.0
+
+        case .degraded:
+            return 10.0
+        }
+    }
+
+    // =====================================================
+    // MARK: - SHARD STATE ACCESS
+    // =====================================================
+
+    public func getMigration(_ shard: ShardId) -> MigrationState {
+        migrationTable[shard] ?? MigrationState(
+            phase: .settling,
+            samples: 0,
+            confidence: 0.0
+        )
+    }
+
+    // =====================================================
+    // MARK: - IDENTIFIABILITY CHECK (UNIFIED RULE)
+    // =====================================================
+
+    public func evaluateIdentifiability(
+        shard: ShardId,
+        signals: RuntimeSignals
+    ) -> IdentifiabilityState {
+
+        let migration = getMigration(shard)
+
+        let credibility = credibility(for: migration)
+
+        let mdd = runtime.mdd(for: shard) * credibility
+        let drift = runtime.drift(for: shard)
+
+        // FIX: posterior overlap now derived from entropy + drift
+        let overlap =
+            Double(signals.entropy.vector.reduce(0, +)) + drift
+
+        if overlap > mdd {
+            return .collapsed(overlap: overlap, drift: drift)
+        }
+
+        return .unique
+    }
+
+    // =====================================================
+    // MARK: - REGIME UPDATE
+    // =====================================================
+
+    public func updateMigration(
+        shard: ShardId,
+        signals: RuntimeSignals
+    ) {
+
+        var state = getMigration(shard)
+
+        let instability = runtime.mdd(for: shard) + runtime.drift(for: shard)
+
+        let nextConfidence = min(1.0, state.confidence + 0.1)
+
+        let nextPhase: RegimePhase =
+            instability < 1.0 ? .active :
+            instability < 5.0 ? .stabilizing :
+            .degraded
+
+        state = MigrationState(
+            phase: nextPhase,
+            samples: state.samples + 1,
+            confidence: nextConfidence
+        )
+
+        migrationTable[shard] = state
+    }
+
+    // =====================================================
+    // MARK: - SYSTEM PULSE (SINGLE ENTRYPOINT)
+    // =====================================================
+
+    public func pulse(
+        shard: ShardId,
+        signals: RuntimeSignals
+    ) -> IdentifiabilityState {
+
+        updateMigration(shard: shard, signals: signals)
+
+        return evaluateIdentifiability(
+            shard: shard,
+            signals: signals
+        )
+    }
+}
