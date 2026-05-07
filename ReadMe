@@ -484,17 +484,93 @@ public struct DVSMSustainabilityAudit {
 }
 
 // =====================================================
-// MARK: - WHITEPAPER ADDENDUM (SPEC LAYER ONLY)
+// DVSM v16.x — WHITEPAPER ADDENDUM (SUSTAINABILITY LAYER)
+// ENERGY-AWARE COMPUTATION + SCALE GOVERNANCE MODEL
 // =====================================================
 //
-// This section is intentionally NON-executable.
+// PURPOSE:
+// Formal specification of DVSM energy-aware execution model.
+// This section is NON-executable and serves as system theory.
 //
-// It formalizes DVSM sustainability behavior:
-// - energy-aware compute scaling
-// - bounded governance execution
-// - deterministic degradation states
-// - race-to-sleep optimization model
+// =====================================================
+// MARK: - SYSTEM ENERGY INVARIANT
+// =====================================================
 //
+// DVSM sustainability MUST preserve:
+//
+//   1. Determinism
+//   2. Auditability
+//   3. Identifiability invariants
+//
+// under all resource constraints.
+//
+// Constraint:
+//
+//   ∀ execution state S, ∃ budget R such that:
+//       F(S) is deterministic regardless of R
+//
+// =====================================================
+// MARK: - RESOURCE-AWARE EXECUTION RULE
+// =====================================================
+//
+// Let:
+//
+//   C = compute budget
+//   G = governance depth
+//   A = audit completeness
+//
+// Execution rule:
+//
+//   if C < threshold:
+//       reduce G
+//       batch A
+//       delay non-critical operations
+//
+// BUT:
+//   critical invariants MUST always execute.
+//
+// =====================================================
+// MARK: - RACE-TO-SLEEP MODEL
+// =====================================================
+//
+// DVSM supports deferred execution windows:
+//
+//   - batch governance checks
+//   - coalesce audit writes
+//   - reduce wake cycles
+//
+// Objective:
+//
+//   minimize energy consumption while preserving correctness.
+//
+// =====================================================
+// MARK: - SAFETY GUARANTEE
+// =====================================================
+//
+// No sustainability mode is allowed to:
+//
+//   - break determinism
+//   - remove audit traceability
+//   - disable critical governance validation
+//
+// ultraLowPower mode is:
+//
+//   a bounded reduction of execution scope,
+//   NOT a removal of correctness constraints.
+//
+// =====================================================
+// MARK: - FORMAL INTERPRETATION
+// =====================================================
+//
+// DVSM optimization objective:
+//
+//   minimize(energy)
+//
+// subject to:
+//
+//   correctness ∧ auditability ∧ identifiability
+//
+// =====================================================
 // Key:
 // public static let originator = DVSMAuthor(
     fullName: "Daniel J. Dillberg",
